@@ -19,7 +19,7 @@ https://irsa.ipac.caltech.edu/applications/Gator/index.html
 
 ### tel_analysis.py
 指定した時刻に見える空を100領域に分け、各領域に入る星をカタログから選ぶツール。  
-ファイルの保存先は"./output"。
+ファイルの保存先は"./output"。これで作った.txtファイルはそのままMakeScript.pyに使う。
 - 使い方
   時刻を以下の形式で引数にする。ただし、入力するのはUTCで。
   ```
