@@ -3,14 +3,7 @@
 ここで作成したファイルをMakeScript.pyに適用して観測スクリプトを作る。  
 (READMEは追記予定)
 
-### 2mass_catalog
-https://irsa.ipac.caltech.edu/applications/Gator/index.html  
-ここにある2massカタログから以下の条件で天体リストを取得したテストファイルを置いている。  
-なお、ファイルには"ra","dec","h_m"の列さえあれば2massカタログでなくても何でもいい。
-  - 6.000 < h_m < 6.010
-  - prox > 10arcsec
-
-### tel_analysis.py
+## tel_analysis.py
 指定した時刻に見える空を100領域に分け、各領域に入る星をカタログから選ぶツール。  
 作成されるファイルは、領域を順番に撮れるように星をリスト化したものになっている。  
 保存先は"./output"。これで作った.txtファイルはそのままMakeScript.pyに適用できる。
@@ -31,6 +24,13 @@ https://irsa.ipac.caltech.edu/applications/Gator/index.html
   targets : 90 in 100 fields
   script for MakeScript.py are saved to "./output/" 
   ```
-  
+
+### 2mass_catalog
+https://irsa.ipac.caltech.edu/applications/Gator/index.html  
+ここにある2massカタログから以下の条件で天体リストを取得したテストファイルを置いている。  
+なお、ファイルには"ra","dec","h_m"の列さえあれば2massカタログでなくても何でもいい。
+  - 6.000 < h_m < 6.010
+  - prox > 10arcsec
+
 ### output
 tel_analysis.pyで作成した観測可能な天体リストの保存先。
