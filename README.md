@@ -1,6 +1,7 @@
 # TelescopeAnalysisList
-望遠鏡解析の際に使う天体のリストを作るコード。
-ここで作成したファイルをMakeScript.pyに適用して観測スクリプトを作る。
+望遠鏡解析の際に使う天体のリストを作るコード。  
+ここで作成したファイルをMakeScript.pyに適用して観測スクリプトを作る。  
+(READMEは追記予定)
 
 ### 2mass_catalog
 https://irsa.ipac.caltech.edu/applications/Gator/index.html  
