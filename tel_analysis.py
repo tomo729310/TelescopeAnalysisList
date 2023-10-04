@@ -5,6 +5,14 @@ from astropy.coordinates import EarthLocation, AltAz, SkyCoord
 import astropy.units as u
 
 def main(time_str, interval):
+    """selected observable stars & make the script for MakeScript.py
+        Args:
+            time_str: observation start time. yyyy-mm-ddThh:mm:ss
+            interval: time required per area. [sec]
+
+        Returns:
+            Number of areas with stars and "*.txt" file for MakeScript.py
+    """
 
     # load 2mass catalog
     csv_file = './2mass_catalog/table_irsa_catalog_search_results_tmp.csv'
@@ -41,7 +49,20 @@ def main(time_str, interval):
                     start_star['altitude'], start_star['azimuth'] = altaz_coords.alt.degree, altaz_coords.az.degree
                     star_map[(start_alt_bin % num_altitude_bins, start_az_bin % num_azimuth_bins)] = start_star
 
-            # the others
+                    """ plot the selected stars
+                    import matplotlib.pyplot as plt
+                    from astroplan import Observer
+                    from astroplan.plots import plot_sky
+                    salt = Observer.at_site("SALT")
+                    fig = plt.figure(figsize=(6, 6))
+                    selected_coords = SkyCoord(ra=start_star['ra']*u.deg, dec=start_star['dec']*u.deg, frame='icrs')
+                    plot_sky(selected_coords, salt, obs_time, style_kwargs={'marker': 'o', 'color': 'gray'})
+                    plt.title(f"UTC {obs_time}", fontsize=14)
+                    #plt.savefig(f"./tel_analysis_gif/selected_star_{az_bin}{alt_bin}.png", dpi=200)
+                    plt.close()
+                    """
+
+            # the other areas
             else:
                 obs_time += interval*u.second # advance time by "interval" seconds
                 altaz_frame = AltAz(obstime=obs_time, location=obs_loc) # re-calc at the new "obs_time"
@@ -55,6 +76,15 @@ def main(time_str, interval):
                     selected_star = bin_stars.nlargest(1, 'ra').iloc[0]
                     selected_star['altitude'], selected_star['azimuth'] = altaz_coords.alt.degree, altaz_coords.az.degree
                     star_map[(alt_bin, az_bin)] = selected_star
+
+                    """ plot the selected stars
+                    fig = plt.figure(figsize=(6, 6))
+                    selected_coords = SkyCoord(ra=start_star['ra']*u.deg, dec=start_star['dec']*u.deg, frame='icrs')
+                    plot_sky(selected_coords, salt, obs_time, style_kwargs={'marker': 'o', 'color': 'gray'})
+                    plt.title(f"UTC {obs_time}", fontsize=14)
+                    #plt.savefig(f"./tel_analysis_gif/selected_star_{az_bin}{alt_bin}.png", dpi=200)
+                    plt.close()
+                    """
 
     # make Dataframe
     data = []
@@ -76,6 +106,7 @@ def main(time_str, interval):
     df_script = df_script.drop(['azimuth', 'altitude'], axis=1)
     df_script.to_csv(f"./output/script_tmp.txt", index=True, header=False, index_label='id')
     print(f"targets : {len(df)} in {num_altitude_bins*num_azimuth_bins} fields")
+    print(f"script for MakeScript.py are saved to \"./output\" ")
 
 if __name__ == "__main__":
     import sys
@@ -86,3 +117,27 @@ if __name__ == "__main__":
 
     time_str, interval = sys.argv[1], int(sys.argv[2])
     main(time_str, interval)
+
+""" make gif
+from PIL import Image
+import os
+image_list=[]
+#time_str = "2023-10-10T02:00:00"
+obs_time = Time(time_str, format='isot', scale='utc')
+start_alt_bin, start_az_bin = 0, 0
+for az_bin in range(start_az_bin, num_azimuth_bins): 
+    for alt_bin in range(start_alt_bin, num_altitude_bins):
+        file_path = f'./tel_analysis_gif/selected_star_{az_bin}{alt_bin}.png'
+        if os.path.exists(file_path):
+            img = Image.open(file_path)
+            image_list.append(img)
+
+#image_list[0].save('./tel_analysis_gif/selected_star.gif',save_all=True, append_images=image_list[1:],optimize=True, duration=300, loop=0)
+"""
+
+""" plot all selected stars
+salt = Observer.at_site("SALT")
+targets = [FixedTarget(coord=SkyCoord(ra=ra, dec=dec, unit=(u.deg, u.deg))) for ra, dec in zip(df.ra, df.dec)]
+fig = plt.figure(figsize=(6, 6))
+plot_sky(targets, salt, time_str, style_kwargs={'marker': 'o', 'color': 'gray'})
+"""
