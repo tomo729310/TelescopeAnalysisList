@@ -34,3 +34,7 @@ https://irsa.ipac.caltech.edu/applications/Gator/index.html
 
 ## output
 tel_analysis.pyで作成した観測可能な天体リストの保存先。
+
+## Note
+今後のアップデート
+- 選ぶ星の等級を選べるようにカタログを更新する。
