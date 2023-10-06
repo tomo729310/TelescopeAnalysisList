@@ -5,6 +5,7 @@ from astropy.coordinates import EarthLocation, AltAz, SkyCoord
 import astropy.units as u
 
 def main(time_str, interval):
+    
     """selected observable stars & make the script for MakeScript.py
         Args:
             time_str: observation start time. yyyy-mm-ddThh:mm:ss
