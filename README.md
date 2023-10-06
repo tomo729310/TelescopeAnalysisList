@@ -18,7 +18,7 @@
   この場合、altとaziが小さい領域(図の上部付近)から星を撮ることができる。(UTC 2023-10-10T02:00:00~)  
   <img src="https://github.com/tomo729310/TelescopeAnalysisList/assets/95862047/dce94add-fa47-4567-b42e-8f333dd51d62" width="50%" />
 
-## 出力
+### 出力
   100領域中、何個の領域に星があるかを表示させるようにしてる。以下は、上のコマンドを実行した時の出力例。
   ```
   targets : 90 in 100 fields
