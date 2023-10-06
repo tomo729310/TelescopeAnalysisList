@@ -53,6 +53,9 @@ def main(time_str, interval):
                     import matplotlib.pyplot as plt
                     from astroplan import Observer
                     from astroplan.plots import plot_sky
+                    import os
+                    gif_dir = "tel_analysis_gif"
+                    os.makedirs(gif_dir, exist_ok=True)
                     salt = Observer.at_site("SALT")
                     fig = plt.figure(figsize=(6, 6))
                     selected_coords = SkyCoord(ra=start_star['ra']*u.deg, dec=start_star['dec']*u.deg, frame='icrs')
@@ -108,15 +111,17 @@ def main(time_str, interval):
     print(f"targets : {len(df)} in {num_altitude_bins*num_azimuth_bins} fields")
     print(f"script for MakeScript.py are saved to \"./output\" ")
 
+
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) != 3:
-        print("Usage: python script_name.py <yyyy-mm-ddThh:mm:ss> <interval[sec]>")
+        print("Usage: python tel_analysis.py <yyyy-mm-ddThh:mm:ss> <interval>")
         sys.exit(1)
 
     time_str, interval = sys.argv[1], int(sys.argv[2])
     main(time_str, interval)
+
 
 """ make gif
 from PIL import Image
