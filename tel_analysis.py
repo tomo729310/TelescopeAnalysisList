@@ -4,11 +4,12 @@ from astropy.time import Time
 from astropy.coordinates import EarthLocation, AltAz, SkyCoord
 import astropy.units as u
 
-def main(time_str, interval):
-    
+def main(time_str, mag, interval):
+
     """selected observable stars & make the script for MakeScript.py
         Args:
             time_str: observation start time. yyyy-mm-ddThh:mm:ss
+            mag: catalog mag from 6 to 8 magnitude
             interval: time required per area. [sec]
 
         Returns:
@@ -16,7 +17,7 @@ def main(time_str, interval):
     """
 
     # load 2mass catalog
-    csv_file = './2mass_catalog/table_irsa_catalog_search_results_tmp.csv'
+    csv_file = f'./2mass_catalog/table_irsa_catalog_search_results_{mag}mag.csv'
     df_tmp = pd.read_csv(csv_file)
 
     # setting
@@ -116,12 +117,14 @@ def main(time_str, interval):
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) != 3:
-        print("Usage: python tel_analysis.py <yyyy-mm-ddThh:mm:ss> <interval>")
+    if len(sys.argv) != 4:
+        print("Usage: python tel_analysis.py <yyyy-mm-ddThh:mm:ss> <[6-8]mag> <interval>")
         sys.exit(1)
 
-    time_str, interval = sys.argv[1], int(sys.argv[2])
-    main(time_str, interval)
+    time_str = sys.argv[1]
+    mag = sys.argv[2]
+    interval = int(sys.argv[3])
+    main(time_str, mag, interval)
 
 
 """ make gif
