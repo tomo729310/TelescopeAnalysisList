@@ -1,152 +1,81 @@
-import pandas as pd
-import numpy as np
+import argparse
 from astropy.time import Time
-from astropy.coordinates import EarthLocation, AltAz, SkyCoord
+from astropy.coordinates import EarthLocation
 import astropy.units as u
 
-def main(time_str, mag, interval):
+from src.tel_analysis.plot.plot import *
+from src.tel_analysis.utils.utils import *
 
+def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
     """selected observable stars & make the script for MakeScript.py
         Args:
             time_str: observation start time. yyyy-mm-ddThh:mm:ss
-            mag: catalog mag from 6 to 8 magnitude
-            interval: time required per area. [sec]
+            interval: time required per area. [sec] (default: 30)
+            mag: catalog mag from 6 to 8 magnitude (default: 6)
+            nbins_alt: number of altitude bins (default: 5)
+            nbins_azi: number of azimuth bins (default: 20)
 
         Returns:
             Number of areas with stars and "*.txt" file for MakeScript.py
     """
-
-    # load 2mass catalog
-    csv_file = f'./2mass_catalog/table_irsa_catalog_search_results_{mag}mag.csv'
-    df_tmp = pd.read_csv(csv_file)
-
     # setting
-    obs_loc = EarthLocation(lat=-32.3763*u.deg, lon=20.8107*u.deg, height=1798*u.m) # location
-    obs_time = Time(time_str, format='isot', scale='utc') # UTC, yyyy-mm-ddThh:mm:ss
+    obs_loc = EarthLocation(lat=-32.3763*u.deg, lon=20.8107*u.deg, height=1798*u.m)
+    obs_time = Time(time_str, format='isot', scale='utc')
 
-    # calc ra/dec and convert to alt/azi at "obs_loc" & "obs_time"
-    coords = SkyCoord(ra=df_tmp['ra']*u.deg, dec=df_tmp['dec']*u.deg, frame='icrs')
-    altaz_frame = AltAz(obstime=obs_time, location=obs_loc)
-    altaz_coords = coords.transform_to(altaz_frame)
-    df_tmp['altitude'], df_tmp['azimuth'] = altaz_coords.alt.degree, altaz_coords.az.degree
+    # star info, ra, dec from catalog
+    df_tmp, df_ra, df_dec = load_2mass_catalog(mag)
 
-    # make bins & areas
-    num_altitude_bins, num_azimuth_bins = 5, 20
-    altitude_bins = np.linspace(30, 80, num_altitude_bins + 1)
-    azimuth_bins = np.linspace(0, 360, num_azimuth_bins + 1)
-    star_map = {(alt_bin, az_bin): None for alt_bin in range(num_altitude_bins) for az_bin in range(num_azimuth_bins)} # dictionary of areas
+    # make alt/azi bins & areas
+    altitude_bins, azimuth_bins, star_map = make_bins(nbins_alt, nbins_azi)
 
     # assign stars to each area
     start_alt_bin, start_az_bin = 0, 0
-    for az_bin in range(start_az_bin, num_azimuth_bins):
-        for alt_bin in range(start_alt_bin, num_altitude_bins):
-            
+    for az_bin in range(start_az_bin, nbins_azi):
+        for alt_bin in range(start_alt_bin, nbins_alt):
             # area(0,0)
             if alt_bin == start_alt_bin and az_bin == start_az_bin:
-                bin_stars = df_tmp.loc[(df_tmp['altitude'].between(altitude_bins[start_alt_bin], altitude_bins[start_alt_bin + 1])) &
-                            (df_tmp['azimuth'].between(azimuth_bins[start_az_bin], azimuth_bins[start_az_bin + 1]))] # find stars in area(0,0)
+                start_altaz_coords = calc_altaz_coords(df_ra*u.deg, df_dec*u.deg, obs_time, obs_loc) # calc alt/azi coords @ obs start time
+                df_tmp['altitude'], df_tmp['azimuth'] = start_altaz_coords.alt.degree, start_altaz_coords.az.degree
 
-                if not bin_stars.empty: # check if "bin_stars" is empty
-                    start_star = bin_stars.nlargest(1, 'ra').iloc[0] # select the star with the largest RA
-                    start_star['altitude'], start_star['azimuth'] = altaz_coords.alt.degree, altaz_coords.az.degree
-                    star_map[(start_alt_bin % num_altitude_bins, start_az_bin % num_azimuth_bins)] = start_star
+                start_bin_stars = find_star(df_tmp, altitude_bins, azimuth_bins, start_alt_bin, start_az_bin) # find stars in area(0,0)
 
-                    """ plot the selected stars
-                    import matplotlib.pyplot as plt
-                    from astroplan import Observer
-                    from astroplan.plots import plot_sky
-                    import os
-                    gif_dir = "tel_analysis_gif"
-                    os.makedirs(gif_dir, exist_ok=True)
-                    salt = Observer.at_site("SALT")
-                    fig = plt.figure(figsize=(6, 6))
-                    selected_coords = SkyCoord(ra=start_star['ra']*u.deg, dec=start_star['dec']*u.deg, frame='icrs')
-                    plot_sky(selected_coords, salt, obs_time, style_kwargs={'marker': 'o', 'color': 'gray'})
-                    plt.title(f"UTC {obs_time}", fontsize=14)
-                    #plt.savefig(f"./tel_analysis_gif/selected_star_{az_bin}{alt_bin}.png", dpi=200)
-                    plt.close()
-                    """
+                if not start_bin_stars.empty: # check if empty
+                    star_map = add_star(start_bin_stars, star_map, start_altaz_coords, start_alt_bin, start_az_bin)
+
+                    # plot star in this area
+                    plot_stars(start_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
 
             # the other areas
             else:
                 obs_time += interval*u.second # advance time by "interval" seconds
-                altaz_frame = AltAz(obstime=obs_time, location=obs_loc) # re-calc at the new "obs_time"
-                altaz_coords = coords.transform_to(altaz_frame)
-                df_tmp['altitude'], df_tmp['azimuth'] = altaz_coords.alt.degree, altaz_coords.az.degree
+                new_altaz_coords = calc_altaz_coords(df_ra*u.deg, df_dec*u.deg, obs_time, obs_loc) # re-calc alt/azi coords at the new "obs_time"
+                df_tmp['altitude'], df_tmp['azimuth'] = new_altaz_coords.alt.degree, new_altaz_coords.az.degree
 
-                bin_stars = df_tmp[(df_tmp['altitude'].between(altitude_bins[alt_bin], altitude_bins[alt_bin + 1])) &
-                                   (df_tmp['azimuth'].between(azimuth_bins[az_bin], azimuth_bins[az_bin + 1]))]
+                other_bin_stars = find_star(df_tmp, altitude_bins, azimuth_bins, alt_bin, az_bin)
 
-                if not bin_stars.empty:
-                    selected_star = bin_stars.nlargest(1, 'ra').iloc[0]
-                    selected_star['altitude'], selected_star['azimuth'] = altaz_coords.alt.degree, altaz_coords.az.degree
-                    star_map[(alt_bin, az_bin)] = selected_star
+                if not other_bin_stars.empty:
+                    star_map = add_star(other_bin_stars, star_map, new_altaz_coords, alt_bin, az_bin)
 
-                    """ plot the selected stars
-                    fig = plt.figure(figsize=(6, 6))
-                    selected_coords = SkyCoord(ra=start_star['ra']*u.deg, dec=start_star['dec']*u.deg, frame='icrs')
-                    plot_sky(selected_coords, salt, obs_time, style_kwargs={'marker': 'o', 'color': 'gray'})
-                    plt.title(f"UTC {obs_time}", fontsize=14)
-                    #plt.savefig(f"./tel_analysis_gif/selected_star_{az_bin}{alt_bin}.png", dpi=200)
-                    plt.close()
-                    """
+                    # plot star in this area
+                    plot_stars(other_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
 
-    # make Dataframe
-    data = []
-    for az_bin in range(num_azimuth_bins):
-        for alt_bin in range(num_altitude_bins):
-            star = star_map[(alt_bin, az_bin)]
-            if star is not None:
-                star_data = {
-                    'ra': star['ra'],
-                    'dec': star['dec'],
-                    'altitude': altitude_bins[alt_bin],
-                    'azimuth': azimuth_bins[az_bin]
-                }
-                data.append(star_data)
-
-    df = pd.DataFrame(data)
-    df.sort_values(by=['azimuth', 'altitude'], inplace=True)
-    df_script = df.reset_index(drop=True)
-    df_script = df_script.drop(['azimuth', 'altitude'], axis=1)
-    df_script.to_csv(f"./output/script_tmp.txt", index=True, header=False, index_label='id')
-    print(f"targets : {len(df)} in {num_altitude_bins*num_azimuth_bins} fields")
+    target_data = make_dataframe(nbins_alt, nbins_azi, star_map, altitude_bins, azimuth_bins)
+    target_data.to_csv(f"./output/script_tmp.txt", index=True, header=False, index_label='id')
+    print(f"targets : {len(target_data)} in {nbins_alt*nbins_azi} fields")
     print(f"script for MakeScript.py are saved to \"./output\" ")
 
+    # #make gif image or display star positions
+    # make_gif(time_str, nbins_alt, nbins_azi)
+    # plot_all_stars(target_data, time_str)
 
 if __name__ == "__main__":
-    import sys
+    parser = argparse.ArgumentParser(description="Star selection for telescope analysis")
 
-    if len(sys.argv) != 4:
-        print("Usage: python tel_analysis.py <yyyy-mm-ddThh:mm:ss> <[6-8]mag> <interval>")
-        sys.exit(1)
+    parser.add_argument("time_str", help="observation start time(UTC) in \"yyyy-mm-ddThh:mm:ss\"")
+    parser.add_argument("--interval", type=int, default=30, help="time required per area [sec] (default: 30)")
+    parser.add_argument("--mag", default=6, help="catalog magnitude from 6 to 8 (default: 6)")
+    parser.add_argument("--nbins_alt", "--alt", type=int, default=5, help="Number of altitude bins (default: 5)")
+    parser.add_argument("--nbins_azi", "--azi", type=int, default=20, help="Number of azimuth bins (default: 20)")
 
-    time_str = sys.argv[1]
-    mag = sys.argv[2]
-    interval = int(sys.argv[3])
-    main(time_str, mag, interval)
-
-
-""" make gif
-from PIL import Image
-import os
-image_list=[]
-#time_str = "2023-10-10T02:00:00"
-obs_time = Time(time_str, format='isot', scale='utc')
-start_alt_bin, start_az_bin = 0, 0
-for az_bin in range(start_az_bin, num_azimuth_bins): 
-    for alt_bin in range(start_alt_bin, num_altitude_bins):
-        file_path = f'./tel_analysis_gif/selected_star_{az_bin}{alt_bin}.png'
-        if os.path.exists(file_path):
-            img = Image.open(file_path)
-            image_list.append(img)
-
-#image_list[0].save('./tel_analysis_gif/selected_star.gif',save_all=True, append_images=image_list[1:],optimize=True, duration=300, loop=0)
-"""
-
-""" plot all selected stars
-salt = Observer.at_site("SALT")
-targets = [FixedTarget(coord=SkyCoord(ra=ra, dec=dec, unit=(u.deg, u.deg))) for ra, dec in zip(df.ra, df.dec)]
-fig = plt.figure(figsize=(6, 6))
-plot_sky(targets, salt, time_str, style_kwargs={'marker': 'o', 'color': 'gray'})
-"""
+    args = parser.parse_args()
+    main(args.time_str, args.interval, args.mag, args.nbins_alt, args.nbins_azi)
