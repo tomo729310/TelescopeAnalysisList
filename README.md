@@ -8,7 +8,7 @@
 保存先は"./output"。これで作った.txtファイルはそのままMakeScript.pyに適用できる。  
   
 altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領域の数を決めている。
-### 引数
+### 使い方
   観測時刻は必ず指定。
   1. time_str : yyyy-mm-ddThh:mm:ss形式のUTC時刻  
   
