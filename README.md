@@ -54,14 +54,15 @@ tel_analysis.pyで作成した観測可能な天体リストの保存先。
 ここに作成された.txtファイルをMakeScript.pyに適用する。
 
 ## tel_analysis_gif
-tel_analysis.py内の以下の部分を実行すると、tel_analysisディレクトリ下に新たに作成される画像の保存先。
+tel_analysis.py内の以下の部分を実行すると、tel_analysisディレクトリ下に新たに作成されるディレクトリ。  
+選んだ星の位置や取る順番を示す画像がここに保存される。
 ```
 #make gif image or display star positions
 make_gif(time_str, nbins_alt, nbins_azi)
 plot_all_stars(target_data, time_str)
 ```
-- make_gif : ターゲットとなる星の順番を示すgif画像を作る。("selected_star.gif")
-- plot_all_stars : 観測開始時刻における、ターゲットとなった全ての星の位置を示した画像を作る。("all_selected_star.png")
+- make_gif : ターゲットとなる星の順番を示すgif画像を作る。例1にあるようなgif画像が作成される(ファイル名:"selected_star.gif")
+- plot_all_stars : 観測開始時刻における、ターゲットとなった全ての星の位置を示した画像を作る。(ファイル名:"all_selected_star.png")
 
 ## Note
 
