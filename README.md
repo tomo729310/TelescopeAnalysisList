@@ -42,6 +42,8 @@ altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領�
 https://irsa.ipac.caltech.edu/applications/Gator/index.html  
 ここにある2massカタログから以下の条件で天体リストを取得した3つのファイルを置いている。  
 カタログの星の等級に合わせたファイル名にしている。
+  - 4.000 < h_m < 4.300, prox > 26arcsec
+  - 5.000 < h_m < 5.100, prox > 20arcsec
   - 6.000 < h_m < 6.010, prox > 10arcsec
   - 7.000 < h_m < 7.010, prox > 10arcsec
   - 8.000 < h_m < 8.010, prox > 10arcsec
@@ -65,4 +67,4 @@ plot_all_stars(target_data, time_str)
 - plot_all_stars : 観測開始時刻における、ターゲットとなった全ての星の位置を示した画像を作る。(ファイル名:"all_selected_star.png")
 
 ## Note
-
+v2.1:星選びには特に必要ないので、tel_analysis.py内のplot_stars関数をコメントアウト。2mass_catalogに4等、5等のカタログを追加。
