@@ -30,8 +30,22 @@ def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
 
     # assign stars to each area
     start_alt_bin, start_az_bin = 0, 0
+
+    # progress bar info
+    print("start searching bright stars in each area...")
+    total_areas = nbins_azi * nbins_alt
+    current_area = 0
+
     for az_bin in range(start_az_bin, nbins_azi):
         for alt_bin in range(start_alt_bin, nbins_alt):
+
+            # progress bar
+            current_area += 1
+            progress_percentage = current_area / total_areas
+            progress_bar_length = int(50 * progress_percentage)
+
+            print(f"[{'#' * progress_bar_length}{' ' * (50 - progress_bar_length)}] {progress_percentage * 100:.2f}%", end='\r')
+
             # area(0,0)
             if alt_bin == start_alt_bin and az_bin == start_az_bin:
                 start_altaz_coords = calc_altaz_coords(df_ra*u.deg, df_dec*u.deg, obs_time, obs_loc) # calc alt/azi coords @ obs start time
@@ -61,8 +75,12 @@ def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
 
     target_data = make_dataframe(nbins_alt, nbins_azi, star_map, altitude_bins, azimuth_bins)
     target_data.to_csv(f"./output/script_tmp.txt", index=True, header=False, index_label='id')
+    print("")
     print(f"targets : {len(target_data)} in {nbins_alt*nbins_azi} fields")
-    print(f"script for MakeScript.py are saved to \"./output\" ")
+    print(f"script for MakeScript.py are saved as \"./output/script_tmp.txt\" ")
+    print("--------------------------")
+    print("Please move \"script_tmp.txt\" to \"MakeScript-main/List/\" and check Offset file (filters, RA/ Dec offset value, etc...) ")
+    print("--------------------------")
 
     # #make gif image or display star positions
     # make_gif(time_str, nbins_alt, nbins_azi)
