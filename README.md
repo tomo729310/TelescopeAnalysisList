@@ -34,8 +34,13 @@ altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領�
   指定した領域中、何個の領域に星があるかを表示する。  
   以下は、例1のコマンドを実行した時の出力例。
   ```
-  targets : 90 in 100 fields
-  script for MakeScript.py are saved to "./output/"
+start searching bright stars in each area...
+[##################################################] 100.00%
+targets : 90 in 100 fields
+script for MakeScript.py are saved as "./output/script_tmp.txt" 
+--------------------------
+Please move "script_tmp.txt" to "MakeScript-main/List/" and check Offset file (filters, RA/ Dec offset value, etc...) 
+--------------------------
   ```
 
 ## 2mass_catalog
@@ -67,4 +72,6 @@ plot_all_stars(target_data, time_str)
 - plot_all_stars : 観測開始時刻における、ターゲットとなった全ての星の位置を示した画像を作る。(ファイル名:"all_selected_star.png")
 
 ## Note
-v2.1:星選びには特に必要ないので、tel_analysis.py内のplot_stars関数をコメントアウト。2mass_catalogに4等、5等のカタログを追加。
+v2.1:星選びには特に必要ないので、tel_analysis.py内のplot_stars関数をコメントアウト。2mass_catalogに4等、5等のカタログを追加。  
+v2.2:プログレスバーを追加。出力ファイルの移動を促すコメントを追加。
+
