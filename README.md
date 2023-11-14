@@ -22,8 +22,8 @@ altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領�
   ```
   python tel_analysis.py 2023-10-10T02:00:00
   ```
-  この場合、altとaziが小さい領域(図の上部付近)から星を撮ることができる。(UTC 2023-10-10T02:00:00~)  
-  <img src="https://github.com/tomo729310/TelescopeAnalysisList/assets/95862047/dce94add-fa47-4567-b42e-8f333dd51d62" width="50%" />
+  この場合、altとaziが小さい領域(図の上部付近)から星を撮ることができる。(UTC 2023-10-10T02:00:00~)   
+  <img src="https://github.com/tomo729310/TelescopeAnalysisList/assets/95862047/60080b0a-4464-4d8b-943c-3bdcad06af40" width="50%" />
 
   (例2)例1と同時刻に、20秒間隔で8等の星を3*10領域分だけ撮るとき、
   ```
