@@ -57,7 +57,7 @@ def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
                     star_map = add_star(start_bin_stars, star_map, start_altaz_coords, start_alt_bin, start_az_bin)
 
                     # plot star in this area
-                    # plot_stars(start_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
+                    # plot_stars(df_tmp, start_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
 
             # the other areas
             else:
@@ -71,7 +71,7 @@ def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
                     star_map = add_star(other_bin_stars, star_map, new_altaz_coords, alt_bin, az_bin)
 
                     # plot star in this area
-                    # plot_stars(other_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
+                    # plot_stars(df_tmp, other_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
 
     target_data = make_dataframe(nbins_alt, nbins_azi, star_map, altitude_bins, azimuth_bins)
     target_data.to_csv(f"./output/script_tmp.txt", index=True, header=False, index_label='id')
