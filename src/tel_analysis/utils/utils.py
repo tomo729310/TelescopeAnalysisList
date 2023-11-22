@@ -3,15 +3,70 @@ import numpy as np
 from astropy.coordinates import AltAz, SkyCoord
 import astropy.units as u
 
+import os
+import glob
+
+def extract_magnitude(file_name):
+    """get magnitude info from a specified file name.
+
+    Args:
+        file_name : file name in a specified format containing magnitude information.
+    """
+
+    # Extract only the number part and convert to float
+    magnitude_part = file_name.split('_')[-1]
+    magnitude_value = float(''.join(filter(str.isdigit, magnitude_part)))
+    return magnitude_value
+
+
+def read_and_combine_files(folder_path, catalog_base_name):
+    file_list = glob.glob(os.path.join(folder_path, f'{catalog_base_name}*mag.csv'))
+    df_list = []
+
+    for file_path in file_list:
+        df = pd.read_csv(file_path)
+        magnitude = extract_magnitude(os.path.basename(file_path))
+        df.insert(0, 'order', magnitude)
+        df_list.append(df)
+
+    combined_df = pd.concat(df_list, ignore_index=True)
+    return combined_df.sort_values(by='order')
+
+def create_or_update_catalog_star_list(folder_path, catalog_star_list_path, catalog_base_name):
+
+    # Check if "catalog_star_list.csv" does not exist. If not, create a new one.
+    if not os.path.exists(catalog_star_list_path):
+        combined_df = read_and_combine_files(folder_path, catalog_base_name)
+        combined_df.to_csv(catalog_star_list_path, index=False)
+    # If "catalog_star_list.csv" already exists, add a new magnitude list (if any)
+    else:
+        catalog_star_list_df = pd.read_csv(catalog_star_list_path)
+        existing_magnitudes = set(catalog_star_list_df['order'])
+
+        for file_path in glob.glob(os.path.join(folder_path, f'{catalog_base_name}*mag.csv')):
+            magnitude = extract_magnitude(os.path.basename(file_path))
+
+            # Add catalog files for any magnitude not in "catalog_star_list.csv"
+            if magnitude not in existing_magnitudes:
+                new_df = pd.read_csv(file_path)
+                new_df.insert(0, 'order', magnitude)
+                catalog_star_list_df = pd.concat([catalog_star_list_df, new_df], ignore_index=True)
+                existing_magnitudes.add(magnitude)
+
+        catalog_star_list_df = catalog_star_list_df.sort_values(by='order')
+        catalog_star_list_df.to_csv(catalog_star_list_path, index=False)
+
 def load_2mass_catalog(mag):
     """load 2mass catalog
 
-    Args:
-        mag : star magnitude
+    Returns:
+        catalog all data, H-mag, ra, dec, prox (type:DataFrame)
+        Note: prox(=proximity)...distance in arcsec to nearest catalog point source
     """
+    # catalog_file = f'./2mass_catalog/catalog_star_list.csv'
     catalog_file = f'./2mass_catalog/table_irsa_catalog_search_results_{mag}mag.csv'
     df = pd.read_csv(catalog_file)
-    return df, df["ra"], df["dec"]
+    return df, df["ra"], df["dec"], df["prox"]
 
 def calc_altaz_coords(ra, dec, obs_time, obs_loc):
     """calc ra/dec and convert to alt/az at "obs_loc" & "obs_time"
@@ -47,21 +102,23 @@ def make_bins(nbins_alt, nbins_az):
     star_map = {(alt_bin, az_bin): None for alt_bin in range(nbins_alt) for az_bin in range(nbins_az)} # dictionary of areas
     return altitude_bins, azimuth_bins, star_map
 
-def find_star(star_info, altitude_bins, azimuth_bins, alt_bin, az_bin):
+def find_star(mag, star_info, altitude_bins, azimuth_bins, alt_bin, az_bin):
     """find stars in each area
 
     Args:
+        mag : Magnitude of the star you want to observe
         star_info : star catalog DataFarme containing such as ["altitude"] & ["azimuth"]
         altitude_bins : total bins of altitude
         azimuth_bins : total bins of azimuth
-        alt_bin (_type_): _description_
-        az_bin (_type_): _description_
 
     Returns:
         DataFrame containing stars within each area
     """
     bin_stars = star_info.loc[ (star_info["altitude"].between(altitude_bins[alt_bin], altitude_bins[alt_bin+1])) &
-                            (star_info["azimuth"].between(azimuth_bins[az_bin], azimuth_bins[az_bin+1])) ]
+                            (star_info["azimuth"].between(azimuth_bins[az_bin], azimuth_bins[az_bin+1])) &
+                            ((star_info["prox"] >= 50)) ]# &
+                            # ((star_info["h_m"] >= mag)) &
+                            # ((star_info["h_m"] < mag+0.5)) ]
     return bin_stars
 
 def add_star(bin_stars, star_map, altaz_coords, alt_bin, az_bin):
@@ -77,9 +134,16 @@ def add_star(bin_stars, star_map, altaz_coords, alt_bin, az_bin):
     Returns:
         updated star map after adding the selected star
     """
-    selected_star = bin_stars.nlargest(1, "ra").iloc[0]
-    selected_star['altitude'], selected_star['azimuth'] = altaz_coords.alt.degree, altaz_coords.az.degree
+    # Sort the DataFrame by "ra" and get the first row
+    selected_star = bin_stars.sort_values("ra", ascending=False).iloc[0]
+
+    # Update altitude and azimuth of the selected star
+    selected_star.at['altitude'] = altaz_coords.alt.degree[0]  # または適切な行を選択
+    selected_star.at['azimuth'] = altaz_coords.az.degree[0]
+
+    # Add the selected star to the star map
     star_map[(alt_bin, az_bin)] = selected_star
+
     return star_map
 
 def make_dataframe(nbins_alt, nbins_az, star_map, altitude_bins, azimuth_bins):

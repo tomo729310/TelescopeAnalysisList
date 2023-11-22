@@ -6,7 +6,7 @@ import astropy.units as u
 from src.tel_analysis.plot.plot import *
 from src.tel_analysis.utils.utils import *
 
-def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
+def main(time_str, interval=30, mag=10, nbins_alt=5, nbins_azi=15):
     """selected observable stars & make the script for MakeScript.py
         Args:
             time_str: observation start time. yyyy-mm-ddThh:mm:ss
@@ -22,8 +22,14 @@ def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
     obs_loc = EarthLocation(lat=-32.3763*u.deg, lon=20.8107*u.deg, height=1798*u.m)
     obs_time = Time(time_str, format='isot', scale='utc')
 
+    # make datalist
+    # folder_path = '2mass_catalog'
+    # catalog_base_name = 'table_irsa_catalog_search_results_' # file name of the base catalog file for each magnitude
+    # catalog_star_list_path = os.path.join(folder_path, 'catalog_star_list.csv') # path of the file that combined the magnitude
+    # create_or_update_catalog_star_list(folder_path, catalog_star_list_path, catalog_base_name)
+
     # star info, ra, dec from catalog
-    df_tmp, df_ra, df_dec = load_2mass_catalog(mag)
+    df_tmp, df_ra, df_dec, df_prox = load_2mass_catalog(mag)
 
     # make alt/azi bins & areas
     altitude_bins, azimuth_bins, star_map = make_bins(nbins_alt, nbins_azi)
@@ -43,15 +49,14 @@ def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
             current_area += 1
             progress_percentage = current_area / total_areas
             progress_bar_length = int(50 * progress_percentage)
-
-            print(f"[{'#' * progress_bar_length}{' ' * (50 - progress_bar_length)}] {progress_percentage * 100:.2f}%", end='\r')
+            print(f"[{'#' * progress_bar_length}{' ' * (50 - progress_bar_length)}] {progress_percentage * 100:.1f}%", end='\r')
 
             # area(0,0)
             if alt_bin == start_alt_bin and az_bin == start_az_bin:
                 start_altaz_coords = calc_altaz_coords(df_ra*u.deg, df_dec*u.deg, obs_time, obs_loc) # calc alt/azi coords @ obs start time
                 df_tmp['altitude'], df_tmp['azimuth'] = start_altaz_coords.alt.degree, start_altaz_coords.az.degree
 
-                start_bin_stars = find_star(df_tmp, altitude_bins, azimuth_bins, start_alt_bin, start_az_bin) # find stars in area(0,0)
+                start_bin_stars = find_star(mag, df_tmp, altitude_bins, azimuth_bins, start_alt_bin, start_az_bin) # find stars in area(0,0)
 
                 if not start_bin_stars.empty: # check if empty
                     star_map = add_star(start_bin_stars, star_map, start_altaz_coords, start_alt_bin, start_az_bin)
@@ -65,7 +70,7 @@ def main(time_str, interval=30, mag=6, nbins_alt=5, nbins_azi=20):
                 new_altaz_coords = calc_altaz_coords(df_ra*u.deg, df_dec*u.deg, obs_time, obs_loc) # re-calc alt/azi coords at the new "obs_time"
                 df_tmp['altitude'], df_tmp['azimuth'] = new_altaz_coords.alt.degree, new_altaz_coords.az.degree
 
-                other_bin_stars = find_star(df_tmp, altitude_bins, azimuth_bins, alt_bin, az_bin)
+                other_bin_stars = find_star(mag, df_tmp, altitude_bins, azimuth_bins, alt_bin, az_bin)
 
                 if not other_bin_stars.empty:
                     star_map = add_star(other_bin_stars, star_map, new_altaz_coords, alt_bin, az_bin)
@@ -91,7 +96,7 @@ if __name__ == "__main__":
 
     parser.add_argument("time_str", help="observation start time(UTC) in \"yyyy-mm-ddThh:mm:ss\"")
     parser.add_argument("--interval", type=int, default=30, help="time required per area [sec] (default: 30)")
-    parser.add_argument("--mag", default=6, help="catalog magnitude from 6 to 8 (default: 6)")
+    parser.add_argument("--mag", type=int, default=10, help="catalog magnitude from 6 to 8 (default: 6)")
     parser.add_argument("--nbins_alt", "--alt", type=int, default=5, help="Number of altitude bins (default: 5)")
     parser.add_argument("--nbins_azi", "--azi", type=int, default=20, help="Number of azimuth bins (default: 20)")
 
