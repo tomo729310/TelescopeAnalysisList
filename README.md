@@ -50,7 +50,7 @@ https://irsa.ipac.caltech.edu/applications/Gator/index.html
   - 11.00 < h_m < 11.13, prox > 50arcsec (~7600)
   - 12.00 < h_m < 12.16, prox > 50arcsec (~7000)  
 また、等級のラベルのついていないファイルは以下の条件で天体リストを取得しており、プログラム内ではこのファイルを読んでいる。  
-  - h_m < 13.00, prox > 75
+  - h_m < 12.00, prox > 75
 
 ## src
 tel_analysis.py内で使う道具入れ
