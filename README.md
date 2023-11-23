@@ -4,30 +4,28 @@
 
 ## tel_analysis.py
 指定した時刻に見える空を100領域(default)に分け、各領域に入る星をカタログから選ぶツール。  
-作成されるファイルは、領域を順番に撮れるように星をリスト化したものになっている。  
+作成されるファイルは、領域を北から順番に撮れるように星をリスト化したものになっている。  
 保存先は"./output"。これで作った.txtファイルはそのままMakeScript.pyに適用できる。  
   
-altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領域の数を決めている。
+altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領域の数を決めている。(調整可)
 ### 使い方
   観測時刻は必ず指定。
   1. time_str : yyyy-mm-ddThh:mm:ss形式のUTC時刻  
   
   以下の引数の指定は任意。()はデフォルト値。
   1. interval : 1領域取る際の所要時間[sec]。(30)
-  2. mag : 撮る星の等級。6から8までの等級。(6)
+  2. mag : 撮る星の2massでのHband等級。9から12までの等級。(10)
   3. nbins_alt or alt : altitudeのビンの数。(5)
   4. nbins_azi or azi : azimuthのビンの数。(20)
 
-  (例1)南ア時間で2023/10/10の午前4時00分(UTCはこれの2時間前)から開始するとき、
+  (例1)南ア時間で2023/11/25の午前0時00分(UTCはこれの2時間前)から開始するとき、
   ```
-  python tel_analysis.py 2023-10-10T02:00:00
+  python tel_analysis.py 2023-11-24T22:00:00
   ```
-  この場合、altとaziが小さい領域(図の上部付近)から星を撮ることができる。(UTC 2023-10-10T02:00:00~)   
-  <img src="https://github.com/tomo729310/TelescopeAnalysisList/assets/95862047/60080b0a-4464-4d8b-943c-3bdcad06af40" width="50%" />
 
-  (例2)例1と同時刻に、20秒間隔で8等の星を3*10領域分だけ撮るとき、
+  (例2)例1と同時刻に、10分(600秒)間隔で9等の星を3*10領域分だけ撮るとき、
   ```
-  python tel_analysis.py 2023-10-10T02:00:00 --interval 20 --mag 8 --alt 3 --azi 10
+  python tel_analysis.py 2023-11-24T22:00:00 --interval 600 --mag 9 --alt 3 --azi 10
   ```
 
 ### 出力
@@ -35,8 +33,8 @@ altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領�
   以下は、例1のコマンドを実行した時の出力例。
   ```
 start searching bright stars in each area...
-[##################################################] 100.00%
-targets : 90 in 100 fields
+[##################################################] 100.0%
+targets : 88 in 100 fields
 script for MakeScript.py are saved as "./output/script_tmp.txt" 
 --------------------------
 Please move "script_tmp.txt" to "MakeScript-main/List/" and check Offset file (filters, RA/ Dec offset value, etc...) 
@@ -45,13 +43,14 @@ Please move "script_tmp.txt" to "MakeScript-main/List/" and check Offset file (f
 
 ## 2mass_catalog
 https://irsa.ipac.caltech.edu/applications/Gator/index.html  
-ここにある2massカタログから以下の条件で天体リストを取得した3つのファイルを置いている。  
-カタログの星の等級に合わせたファイル名にしている。
-  - 4.000 < h_m < 4.300, prox > 26arcsec
-  - 5.000 < h_m < 5.100, prox > 20arcsec
-  - 6.000 < h_m < 6.010, prox > 10arcsec
-  - 7.000 < h_m < 7.010, prox > 10arcsec
-  - 8.000 < h_m < 8.010, prox > 10arcsec
+ここにある2massカタログから以下の条件で天体リストを取得した3つのファイルを置いている。()内は条件を満たすおおよその星の数。  
+カタログの星の等級に合わせたファイル名にしている。(proxとは、近くの星までの距離[arcsec]を表す。)
+  - 9.00 < h_m < 9.50, prox > 50arcsec (~7000)
+  - 10.00 < h_m < 10.30, prox > 50arcsec (~8000)
+  - 11.00 < h_m < 11.13, prox > 50arcsec (~7600)
+  - 12.00 < h_m < 12.16, prox > 50arcsec (~7000)  
+また、等級のラベルのついていないファイルは以下の条件で天体リストを取得しており、プログラム内ではこのファイルを読んでいる。  
+  - h_m < 13.00, prox > 75
 
 ## src
 tel_analysis.py内で使う道具入れ
@@ -74,4 +73,5 @@ plot_all_stars(target_data, time_str)
 ## Note
 v2.1:星選びには特に必要ないので、tel_analysis.py内のplot_stars関数をコメントアウト。2mass_catalogに4等、5等のカタログを追加。  
 v2.2:プログレスバーを追加。出力ファイルの移動を促すコメントを追加。
+v3.0:孤立した星を選べるようにカタログファイルやtel_analysis.pyを調整。不要なファイルを削除。
 

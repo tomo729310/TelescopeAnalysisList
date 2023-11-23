@@ -18,7 +18,6 @@ def extract_magnitude(file_name):
     magnitude_value = float(''.join(filter(str.isdigit, magnitude_part)))
     return magnitude_value
 
-
 def read_and_combine_files(folder_path, catalog_base_name):
     file_list = glob.glob(os.path.join(folder_path, f'{catalog_base_name}*mag.csv'))
     df_list = []
@@ -56,17 +55,17 @@ def create_or_update_catalog_star_list(folder_path, catalog_star_list_path, cata
         catalog_star_list_df = catalog_star_list_df.sort_values(by='order')
         catalog_star_list_df.to_csv(catalog_star_list_path, index=False)
 
-def load_2mass_catalog(mag):
+def load_2mass_catalog():
     """load 2mass catalog
 
     Returns:
         catalog all data, H-mag, ra, dec, prox (type:DataFrame)
         Note: prox(=proximity)...distance in arcsec to nearest catalog point source
     """
-    # catalog_file = f'./2mass_catalog/catalog_star_list.csv'
-    catalog_file = f'./2mass_catalog/table_irsa_catalog_search_results_{mag}mag.csv'
+    catalog_file = './2mass_catalog/table_irsa_catalog_search_results.csv'
+    # catalog_file = f'./2mass_catalog/table_irsa_catalog_search_results_10mag.csv'
     df = pd.read_csv(catalog_file)
-    return df, df["ra"], df["dec"], df["prox"]
+    return df, df["ra"], df["dec"]
 
 def calc_altaz_coords(ra, dec, obs_time, obs_loc):
     """calc ra/dec and convert to alt/az at "obs_loc" & "obs_time"
@@ -80,7 +79,7 @@ def calc_altaz_coords(ra, dec, obs_time, obs_loc):
     Returns:
         alt/az coords of stars at "obs_loc" & "obs_time"
     """
-    coords = SkyCoord(ra, dec, frame='icrs')
+    coords = SkyCoord(ra, dec, frame='icrs', unit="deg")
     altaz_frame = AltAz(obstime=obs_time, location=obs_loc)
     altaz_coords = coords.transform_to(altaz_frame)
     return altaz_coords
@@ -114,12 +113,17 @@ def find_star(mag, star_info, altitude_bins, azimuth_bins, alt_bin, az_bin):
     Returns:
         DataFrame containing stars within each area
     """
-    bin_stars = star_info.loc[ (star_info["altitude"].between(altitude_bins[alt_bin], altitude_bins[alt_bin+1])) &
-                            (star_info["azimuth"].between(azimuth_bins[az_bin], azimuth_bins[az_bin+1])) &
-                            ((star_info["prox"] >= 50)) ]# &
-                            # ((star_info["h_m"] >= mag)) &
-                            # ((star_info["h_m"] < mag+0.5)) ]
-    return bin_stars
+
+    matched_stars = star_info.loc[
+        (star_info["altitude"].between(altitude_bins[alt_bin], altitude_bins[alt_bin+1])) &
+        (star_info["azimuth"].between(azimuth_bins[az_bin], azimuth_bins[az_bin+1])) &
+        ((star_info["h_m"] >= mag) & (star_info["h_m"] < mag + 0.5)) &
+        (star_info["prox"] >= 75)
+    ]
+    # print(f"matched_stars:{len(matched_stars)}, {np.shape(matched_stars)}")
+    filtered_stars_df = pd.DataFrame(matched_stars)
+
+    return filtered_stars_df
 
 def add_star(bin_stars, star_map, altaz_coords, alt_bin, az_bin):
     """add the star with the largest RA to star map
