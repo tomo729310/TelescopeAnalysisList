@@ -95,10 +95,16 @@ def make_bins(nbins_alt, nbins_az):
         total bins of alt/az & dictionary representing areas for star map
     """
     min_alt, max_alt = 30, 80 # degree
-    min_az, max_az = 0, 360 # degree
+    # min_az, max_az = 0, 360 # degree
+    min_az, max_az = -180, 180
     altitude_bins = np.linspace(min_alt, max_alt, nbins_alt + 1)
     azimuth_bins = np.linspace(min_az, max_az, nbins_az + 1)
+    print(azimuth_bins)
+    # azimuth_bins = np.concatenate([azimuth_bins[int(nbins_az/2):], azimuth_bins[:int(nbins_az/2)]])
+    # print(azimuth_bins)
+
     star_map = {(alt_bin, az_bin): None for alt_bin in range(nbins_alt) for az_bin in range(nbins_az)} # dictionary of areas
+    print(star_map)
     return altitude_bins, azimuth_bins, star_map
 
 def find_star(mag, star_info, altitude_bins, azimuth_bins, alt_bin, az_bin):
@@ -113,6 +119,8 @@ def find_star(mag, star_info, altitude_bins, azimuth_bins, alt_bin, az_bin):
     Returns:
         DataFrame containing stars within each area
     """
+
+    star_info["azimuth"] = ((star_info["azimuth"] + 180) % 360) - 180 # (0,360)deg -> (-180,180)deg
 
     matched_stars = star_info.loc[
         (star_info["altitude"].between(altitude_bins[alt_bin], altitude_bins[alt_bin+1])) &

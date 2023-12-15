@@ -2,6 +2,7 @@ import os
 from PIL import Image
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 import astropy.units as u
 from astropy.time import Time
@@ -25,7 +26,15 @@ def plot_stars(df, bin_stars, star_map, altaz_coords, obs_time, az_bin, alt_bin)
     selected_star = bin_stars.nlargest(1, "ra").iloc[0]
     coords_for_plot = SkyCoord(ra=selected_star['ra']*u.deg, dec=selected_star['dec']*u.deg, frame='icrs')
     plot_sky(coords_for_plot, salt, obs_time, style_kwargs={'marker': 'o', 'color': 'C0'}) # selected star
-    plot_sky(targets, salt, obs_time, style_kwargs={'marker': '.', 'alpha': 0.3, 'color': 'gray'}) # all stars
+    # plot_sky(targets, salt, obs_time, style_kwargs={'marker': '.', 'alpha': 0.3, 'color': 'gray'}) # all stars
+
+    low, upper = 22, 88
+    theta = np.arange(0, 360)
+    low_limit = [90-low] * len(theta)
+    upper_limit = [90-upper] * len(theta)
+    plt.plot(theta, low_limit, '.', color='C1', markersize=4, label=f'limit : {low}°, {upper}°')
+    plt.plot(theta, upper_limit, '.', color='C1', markersize=2)
+
     plt.title(f"UTC {obs_time}", fontsize=14)
     plt.savefig(f"./tel_analysis_gif/selected_star_{az_bin}{alt_bin}.png", dpi=200)
     plt.close()
