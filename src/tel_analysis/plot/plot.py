@@ -1,4 +1,5 @@
 import os
+import shutil
 from PIL import Image
 
 import matplotlib.pyplot as plt
@@ -12,12 +13,23 @@ from astroplan import Observer
 from astroplan import FixedTarget
 from astroplan.plots import plot_sky
 
+def directory_check(img_dir):
+    if os.path.exists(img_dir):
+        for filename in os.listdir(img_dir):
+            file_path = os.path.join(img_dir, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")
+
+    # Re-create directory
+    os.makedirs(img_dir, exist_ok=True)
 
 def plot_stars(df, bin_stars, star_map, altaz_coords, obs_time, az_bin, alt_bin):
     """plot the selected stars"""
-
-    img_dir = "tel_analysis_gif"
-    os.makedirs(img_dir, exist_ok=True)
     salt = Observer.at_site("SALT")
 
     targets = [FixedTarget(coord=SkyCoord(ra=ra, dec=dec, unit=(u.deg, u.deg))) for ra, dec in zip(df.ra, df.dec)]

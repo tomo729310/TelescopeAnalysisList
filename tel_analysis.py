@@ -3,7 +3,7 @@ from astropy.time import Time
 from astropy.coordinates import EarthLocation
 import astropy.units as u
 
-# from src.tel_analysis.plot.plot import *
+from src.tel_analysis.plot.plot import *
 from src.tel_analysis.utils.utils import *
 
 def main(time_str, interval=30, mag=10, nbins_alt=5, nbins_azi=20):
@@ -21,6 +21,10 @@ def main(time_str, interval=30, mag=10, nbins_alt=5, nbins_azi=20):
     # setting
     obs_loc = EarthLocation(lat=-32.3763*u.deg, lon=20.8107*u.deg, height=1798*u.m)
     obs_time = Time(time_str, format='isot', scale='utc')
+
+    # If the directory for images already exists, empty its contents.
+    img_dir = "./tel_analysis_gif"
+    directory_check(img_dir)
 
     # # make datalist
     # folder_path = '2mass_catalog'
@@ -62,11 +66,14 @@ def main(time_str, interval=30, mag=10, nbins_alt=5, nbins_azi=20):
                     star_map = add_star(start_bin_stars, star_map, start_altaz_coords, start_alt_bin, start_az_bin)
 
                     # plot star in this area
-                    # plot_stars(df_tmp, start_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
+                    plot_stars(df_tmp, start_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
+
+                    # advance time by "interval" [sec]
+                    obs_time += interval*u.second
 
             # the other areas
             else:
-                obs_time += interval*u.second # advance time by "interval" seconds
+                # obs_time += interval*u.second # advance time by "interval" seconds
                 new_altaz_coords = calc_altaz_coords(df_ra, df_dec, obs_time, obs_loc) # re-calc alt/azi coords at the new "obs_time"
                 df_tmp['altitude'], df_tmp['azimuth'] = new_altaz_coords.alt.degree, new_altaz_coords.az.degree
 
@@ -76,7 +83,10 @@ def main(time_str, interval=30, mag=10, nbins_alt=5, nbins_azi=20):
                     star_map = add_star(other_bin_stars, star_map, new_altaz_coords, alt_bin, az_bin)
 
                     # plot star in this area
-                    # plot_stars(df_tmp, other_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
+                    plot_stars(df_tmp, other_bin_stars, star_map, start_altaz_coords, obs_time, az_bin, alt_bin)
+
+                    # advance time by "interval" [sec]
+                    obs_time += interval*u.second
 
     target_data = make_dataframe(nbins_alt, nbins_azi, star_map, altitude_bins, azimuth_bins)
     target_data.to_csv(f"./output/script_tmp.txt", index=True, header=False, index_label='id')
