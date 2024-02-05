@@ -14,7 +14,7 @@ altitude(30°-80°)とazimuth(0°-360°)をいくつかに分割して撮る領�
   
   以下の引数の指定は任意。()はデフォルト値。
   1. interval : 1領域取る際の所要時間[sec]。(30)
-  2. mag : 撮る星の2massでのHband等級。9から12までの等級。(10)
+  2. mag : 撮る星の2massでのHband等級。9から11までの等級。(10)
   3. nbins_alt or alt : altitudeのビンの数。(5)
   4. nbins_azi or azi : azimuthのビンの数。(20)
 
@@ -49,7 +49,7 @@ https://irsa.ipac.caltech.edu/applications/Gator/index.html
   - 10.00 < h_m < 10.30, prox > 50arcsec (~8000)
   - 11.00 < h_m < 11.13, prox > 50arcsec (~7600)
   - 12.00 < h_m < 12.16, prox > 50arcsec (~7000)  
-また、等級のラベルのついていないファイルは以下の条件で天体リストを取得しており、プログラム内ではこのファイルを読んでいる。  
+また、等級のラベルのついていないファイルは以下の条件で天体リストを取得しており、現在(2024/02/05)のプログラム内ではこのファイルを読んでいる。  
   - h_m < 12.00, prox > 75
 
 ## src
